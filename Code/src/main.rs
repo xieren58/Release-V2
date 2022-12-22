@@ -65,6 +65,7 @@ fn main() -> ! {
             Ok(atqa) => {
                 defmt::info!("new card detected");
                 match mfrc522.select(&atqa) {
+
                     Ok(ref uid @ Uid::Single(ref inner)) => {
                         defmt::info!("card uid {=[?]}", inner.as_bytes());
                         handle_card(&mut mfrc522, &uid, write);
@@ -73,13 +74,18 @@ fn main() -> ! {
                         defmt::info!("card double uid {=[?]}", inner.as_bytes());
                         handle_card(&mut mfrc522, &uid, write);
                     }
-                    Ok(_) => defmt::info!("got other uid size"),
+                    Ok(_) => {
+                        defmt::info!("got other uid size")
+                    }
+
                     Err(_) => {
+                        //uid errors 
                         defmt::error!("Select error");
                        
                     }
                 }
             }
+            //wupa function errors 
             Err(_) => {
                 defmt::error!("WUPA error");
             
