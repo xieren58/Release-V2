@@ -2,6 +2,7 @@
 #![no_main]
 
 use defmt_rtt as _;
+use hal::pwm::tim3;
 use panic_probe as _;
 use stm32f3xx_hal as hal;
 
@@ -23,8 +24,8 @@ fn main() -> ! {
     let mut flash = dp.FLASH.constrain();
     let mut rcc = dp.RCC.constrain();
     let mut gpioc = dp.GPIOC.split(&mut rcc.ahb);
+    let mut gpioa = dp.GPIOA.split(&mut rcc.ahb);
     let mut gpiod = dp.GPIOD.split(&mut rcc.ahb);
-
     // clock configuration
     let clocks = rcc
         .cfgr
@@ -32,13 +33,32 @@ fn main() -> ! {
         .sysclk(48.MHz())
         .pclk1(24.MHz())
         .freeze(&mut flash.acr);
+
+    //tim3 clock
+    let tim3_channels = tim3(
+        dp.TIM3,
+        1280,    // resolution of duty cycle
+        50.Hz(), // frequency of period
+        &clocks, // To get the timer's clock speed
+    );
+
+    //pwm pins and tim3
+
+    let pa6 = gpioa 
+        .pa6
+        .into_af_push_pull::<2>(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl);
+
+    let mut tim3_ch1 = tim3_channels.0.output_to_pa6(pa6);
+
     // Configure pins for SPI
     let nss = gpiod //nss/sda =pd0
         .pd0
         .into_push_pull_output(&mut gpiod.moder, &mut gpiod.otyper);
+
     let sck = gpioc         //sck = pc10
         .pc10
         .into_af_push_pull(&mut gpioc.moder, &mut gpioc.otyper, &mut gpioc.afrh);
+
     let miso = gpioc            //miso = pc11
         .pc11
         .into_af_push_pull(&mut gpioc.moder, &mut gpioc.otyper, &mut gpioc.afrh);
@@ -61,6 +81,12 @@ fn main() -> ! {
 
     let write = false;
     loop {
+        tim3_ch1.set_duty(tim3_ch1.get_max_duty()/10); // 5% duty cyle
+        tim3_ch1.enable();
+        cortex_m::asm::delay(5_000_000);
+        tim3_ch1.set_duty(tim3_ch1.get_max_duty()/20); // 10% duty cyle
+        tim3_ch1.enable();
+        cortex_m::asm::delay(5_000_000);
         match mfrc522.wupa() {
             Ok(atqa) => {
                 defmt::info!("new card detected");
