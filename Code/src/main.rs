@@ -54,7 +54,7 @@ fn main() -> ! {
     let mut mfrc522 = Mfrc522::new(spi, nss).expect("could not create MFRC522");
     match mfrc522.version() {
         Ok(version) => defmt::info!("version {:x}", version),
-        Err(_e) => defmt::error!("version error"),
+        Err(_) => defmt::error!("version error"),
     }
 
     //this Loop needs understanding
@@ -73,22 +73,19 @@ fn main() -> ! {
                         defmt::info!("card double uid {=[?]}", inner.as_bytes());
                         handle_card(&mut mfrc522, &uid, write);
                     }
-                    Ok(_) => {
-                        defmt::info!("got other uid size")
-                    }
-
-                    Err(e) => {
+                    Ok(_) => defmt::info!("got other uid size"),
+                    Err(_) => {
                         defmt::error!("Select error");
-                        print_err(&e);
+                       
                     }
                 }
             }
-            Err(e) => {
+            Err(_) => {
                 defmt::error!("WUPA error");
-                print_err(&e);
+            
             }
         }
-        timer.delay_ms(100u32);
+        timer.delay_ms(1000u32);
     }
 }
 
@@ -108,17 +105,17 @@ where
                 Ok(_) => {
                     defmt::info!("write success");
                 }
-                Err(e) => {
+                Err(_) => {
                     defmt::error!("error during read");
-                    print_err(&e);
+                
                 }
             }
         } else {
             match mfrc522.mf_read(1) {
                 Ok(data) => defmt::info!("read {=[?]}", data),
-                Err(e) => {
+                Err(_) => {
                     defmt::error!("error during read");
-                    print_err(&e);
+
                 }
             }
         }
@@ -134,23 +131,7 @@ where
     }
 }
 
-fn print_err<E>(err: &mfrc522::Error<E>) {
-    match err {
-        mfrc522::Error::Bcc => defmt::error!("error BCC"),
-        mfrc522::Error::BufferOverflow => defmt::error!("error BufferOverflow"),
-        mfrc522::Error::Collision => defmt::error!("error Collision"),
-        mfrc522::Error::Crc => defmt::error!("error Crc"),
-        mfrc522::Error::IncompleteFrame => defmt::error!("error Incomplete"),
-        mfrc522::Error::NoRoom => defmt::error!("error NoRoom"),
-        mfrc522::Error::Overheating => defmt::error!("error Overheating"),
-        mfrc522::Error::Parity => defmt::error!("error Parity"),
-        mfrc522::Error::Protocol => defmt::error!("error Protocol"),
-        mfrc522::Error::Timeout => defmt::error!("error Timeout"),
-        mfrc522::Error::Wr => defmt::error!("error Wr"),
-        mfrc522::Error::Nak => defmt::error!("error Nak"),
-        _ => defmt::error!("error SPI"),
-    };
-}
+
 
 #[defmt::panic_handler]
 fn panic() -> ! {
