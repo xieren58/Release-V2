@@ -57,6 +57,8 @@ fn main() -> ! {
         Err(_e) => defmt::error!("version error"),
     }
 
+    //this Loop needs understanding
+
     let write = false;
     loop {
         match mfrc522.wupa() {
@@ -71,7 +73,10 @@ fn main() -> ! {
                         defmt::info!("card double uid {=[?]}", inner.as_bytes());
                         handle_card(&mut mfrc522, &uid, write);
                     }
-                    Ok(_) => defmt::info!("got other uid size"),
+                    Ok(_) => {
+                        defmt::info!("got other uid size")
+                    }
+
                     Err(e) => {
                         defmt::error!("Select error");
                         print_err(&e);
@@ -83,7 +88,7 @@ fn main() -> ! {
                 print_err(&e);
             }
         }
-        timer.delay_ms(1000u32);
+        timer.delay_ms(100u32);
     }
 }
 
