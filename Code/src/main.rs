@@ -81,12 +81,15 @@ fn main() -> ! {
 
     let write = false;
     loop {
+        //turning servo left and right 
         tim3_ch1.set_duty(tim3_ch1.get_max_duty()/10); // 5% duty cyle
         tim3_ch1.enable();
         cortex_m::asm::delay(5_000_000);
         tim3_ch1.set_duty(tim3_ch1.get_max_duty()/20); // 10% duty cyle
         tim3_ch1.enable();
         cortex_m::asm::delay(5_000_000);
+
+        //verification for RFID 
         match mfrc522.wupa() {
             Ok(atqa) => {
                 defmt::info!("new card detected");
