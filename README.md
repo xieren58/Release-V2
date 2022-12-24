@@ -15,7 +15,10 @@
 
 
 ## Current status picture
-![IMG_4516](https://user-images.githubusercontent.com/75183079/209245874-31e6406e-037d-47fb-a6c8-4b0596c8c83f.jpg)
+<p align="center">
+  <img src="https://user-images.githubusercontent.com/75183079/209245874-31e6406e-037d-47fb-a6c8-4b0596c8c83f.jpg" width="500" title="Cover Photo">
+</p>
+
 ## Credits
 
 See [CREDITS.md](./CREDITS.md)
