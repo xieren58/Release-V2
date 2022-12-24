@@ -5,7 +5,7 @@
 </p>
 
 ## To-Do
-- [X] Join Servo and RFID code together 
+- [X] Join [Servo](https://github.com/tomasApo/stm32f3_pwm_v0) and [RFID](https://github.com/tomasApo/stm32_mfrc522) code together 
 
 - [ ] Incorperate LED's
 
