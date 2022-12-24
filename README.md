@@ -14,5 +14,8 @@
 - [ ] Buzzer?
 
 
-### Current status picture
+## Current status picture
 ![IMG_4516](https://user-images.githubusercontent.com/75183079/209245874-31e6406e-037d-47fb-a6c8-4b0596c8c83f.jpg)
+## Credits
+
+See [CREDITS.md](./CREDITS.md)
