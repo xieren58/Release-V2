@@ -5,6 +5,7 @@
 </p>
 
 ## To-Do
+- [ ] Join Servo and RFID code together 
 
 - [ ] Incorperate LED's
 
