@@ -18,6 +18,8 @@ use mfrc522::{Mfrc522, Uid};
 
 #[cortex_m_rt::entry]
 fn main() -> ! {
+    
+    //peripheral stuff
     let dp = pac::Peripherals::take().unwrap();
     let cp = cortex_m::Peripherals::take().unwrap();
 
@@ -26,6 +28,7 @@ fn main() -> ! {
     let mut gpioc = dp.GPIOC.split(&mut rcc.ahb);
     let mut gpioa = dp.GPIOA.split(&mut rcc.ahb);
     let mut gpiod = dp.GPIOD.split(&mut rcc.ahb);
+
     // clock configuration
     let clocks = rcc
         .cfgr
