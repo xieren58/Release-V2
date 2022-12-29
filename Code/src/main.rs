@@ -2,7 +2,6 @@
 #![no_main]
 
 use defmt_rtt as _;
-use hal::pwm::tim3;
 use panic_probe as _;
 use stm32f3xx_hal as hal;
 
@@ -38,7 +37,7 @@ fn main() -> ! {
         .freeze(&mut flash.acr);
 
     //tim3 clock
-    let tim3_channels = tim3(
+    let tim3_channels = hal::pwm::tim3(
         dp.TIM3,
         1280,    // resolution of duty cycle
         50.Hz(), // frequency of period
