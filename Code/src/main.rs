@@ -1,6 +1,7 @@
 #![no_std]
 #![no_main]
 
+use defmt::println;
 use defmt_rtt as _;
 use panic_probe as _;
 use stm32f3xx_hal as hal;
@@ -49,10 +50,11 @@ fn main() -> ! {
     let pa6 = gpioa 
         .pa6
         .into_af_push_pull::<2>(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl);
-
     let mut tim3_ch1 = tim3_channels.0.output_to_pa6(pa6);
-
+    
+    
     // Configure pins for SPI
+    
     let nss = gpiod //nss/sda =pd0
         .pd0
         .into_push_pull_output(&mut gpiod.moder, &mut gpiod.otyper);
@@ -67,7 +69,7 @@ fn main() -> ! {
     let mosi = gpioc            //mosi = pc12
         .pc12
         .into_af_push_pull(&mut gpioc.moder, &mut gpioc.otyper, &mut gpioc.afrh);
-
+    
     // defaults to using MODE_0
     let spi = Spi::new(dp.SPI3, (sck, miso, mosi), 1.MHz(), clocks, &mut rcc.apb1);
 
@@ -84,13 +86,7 @@ fn main() -> ! {
     let write = false;
     loop {
         //turning servo left and right 
-        tim3_ch1.set_duty(tim3_ch1.get_max_duty()/10); // 5% duty cyle
-        tim3_ch1.enable();
-        cortex_m::asm::delay(5_000_000);
-        tim3_ch1.set_duty(tim3_ch1.get_max_duty()/20); // 10% duty cyle
-        tim3_ch1.enable();
-        cortex_m::asm::delay(5_000_000);
-
+        
         //verification for RFID 
         match mfrc522.wupa() {
             Ok(atqa) => {
@@ -100,6 +96,15 @@ fn main() -> ! {
                     Ok(ref uid @ Uid::Single(ref inner)) => {
                         defmt::info!("card uid {=[?]}", inner.as_bytes());
                         handle_card(&mut mfrc522, &uid, write);
+
+                        //locking and unlocking the trolley
+                        defmt::info!("unlocking and locking!");
+                        tim3_ch1.set_duty(tim3_ch1.get_max_duty()/10); // 5% duty cyle 90° 
+                        tim3_ch1.enable();
+                        cortex_m::asm::delay(10_000_000);
+                        tim3_ch1.set_duty(tim3_ch1.get_max_duty()/20); // 10% duty cyle 180° 
+                        tim3_ch1.enable();
+                        cortex_m::asm::delay(5_000_000);
                     }
                     Ok(ref uid @ Uid::Double(ref inner)) => {
                         defmt::info!("card double uid {=[?]}", inner.as_bytes());
@@ -125,6 +130,7 @@ fn main() -> ! {
         timer.delay_ms(1000u32);
     }
 }
+
 
 fn handle_card<E, SPI, NSS>(mfrc522: &mut Mfrc522<SPI, NSS>, uid: &Uid, write: bool)
 where
@@ -167,7 +173,6 @@ where
         defmt::error!("Could not disable crypto1");
     }
 }
-
 
 
 #[defmt::panic_handler]
