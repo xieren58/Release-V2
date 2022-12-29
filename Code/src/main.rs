@@ -18,6 +18,13 @@ use mfrc522::{Mfrc522, Uid};
 
 #[cortex_m_rt::entry]
 fn main() -> ! {
+
+    //list of cards with access 
+    let uid_card_pass_1 = ("106, 205, 135,25").as_bytes();
+    let uid_card_pass_2 = ("250, 153, 234, 13").as_bytes();
+    let uid_card_pass_3 = ("250, 153, 234, 13").as_bytes();
+    
+
     
     //peripheral stuff
     let dp = pac::Peripherals::take().unwrap();
@@ -40,6 +47,10 @@ fn main() -> ! {
     //led configuration
     let mut red_led =gpiod
         .pd6
+        .into_push_pull_output(&mut gpiod.moder, &mut gpiod.otyper);
+    
+    let mut green_led = gpiod 
+        .pd5
         .into_push_pull_output(&mut gpiod.moder, &mut gpiod.otyper);
 
     //tim3 clock
@@ -90,7 +101,6 @@ fn main() -> ! {
     //this Loop needs understanding
 
     let write = false;
-    
     loop {
         //turning servo left and right 
         
@@ -101,18 +111,27 @@ fn main() -> ! {
 
                     Ok(ref uid @ Uid::Single(ref inner)) => {
                         defmt::info!("card uid {=[?]}", inner.as_bytes());
+                        defmt::info!("card uid {=[?]}", uid_card_pass_1);
                         handle_card(&mut mfrc522, &uid, write);
+                        
+                        if inner.as_bytes() == uid_card_pass_1 {
+                            defmt::info!("unlocking and locking trolley!");
+                            green_led.toggle().unwrap();
+                            tim3_ch1.set_duty(tim3_ch1.get_max_duty()/10); // 5% duty cyle 90° 
+                            tim3_ch1.enable();
+                            cortex_m::asm::delay(10_000_000);
+                            tim3_ch1.set_duty(tim3_ch1.get_max_duty()/20); // 10% duty cyle 180° 
+                            tim3_ch1.enable();
+                            cortex_m::asm::delay(5_000_000);
+                            green_led.toggle().unwrap();
+                        }
+                        else{
+                            red_led.toggle().unwrap();
+                            cortex_m::asm::delay(5_000_000);
+                            red_led.toggle().unwrap();
+                        }
+                        
 
-                        //locking and unlocking the trolley
-                        red_led.toggle().unwrap();
-                        defmt::info!("unlocking and locking!");
-                        tim3_ch1.set_duty(tim3_ch1.get_max_duty()/10); // 5% duty cyle 90° 
-                        tim3_ch1.enable();
-                        cortex_m::asm::delay(10_000_000);
-                        tim3_ch1.set_duty(tim3_ch1.get_max_duty()/20); // 10% duty cyle 180° 
-                        tim3_ch1.enable();
-                        cortex_m::asm::delay(5_000_000);
-                        red_led.toggle().unwrap();
                     }
                     Ok(ref uid @ Uid::Double(ref inner)) => {
                         defmt::info!("card double uid {=[?]}", inner.as_bytes());
@@ -125,18 +144,17 @@ fn main() -> ! {
                     Err(_) => {
                         //uid errors 
                         defmt::error!("Select error");
-                       
+
                     }
                 }
-            
-            //wupa function errors 
+            }
+            timer.delay_ms(1000u32);
         }
-        timer.delay_ms(1000u32);
-    }
-
         
-
+        
 }
+
+
 
 
 fn handle_card<E, SPI, NSS>(mfrc522: &mut Mfrc522<SPI, NSS>, uid: &Uid, write: bool)
