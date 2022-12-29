@@ -37,6 +37,11 @@ fn main() -> ! {
         .pclk1(24.MHz())
         .freeze(&mut flash.acr);
 
+    //led configuration
+    let mut red_led =gpiod
+        .pd6
+        .into_push_pull_output(&mut gpiod.moder, &mut gpiod.otyper);
+
     //tim3 clock
     let tim3_channels = hal::pwm::tim3(
         dp.TIM3,
@@ -45,11 +50,12 @@ fn main() -> ! {
         &clocks, // To get the timer's clock speed
     );
 
-    //pwm pins and tim3
+    //pwm servo pins and tim3
 
     let pa6 = gpioa 
         .pa6
         .into_af_push_pull::<2>(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl);
+    
     let mut tim3_ch1 = tim3_channels.0.output_to_pa6(pa6);
     
     
@@ -84,12 +90,12 @@ fn main() -> ! {
     //this Loop needs understanding
 
     let write = false;
+    
     loop {
         //turning servo left and right 
         
         //verification for RFID 
-        match mfrc522.wupa() {
-            Ok(atqa) => {
+        if let Ok(atqa) = mfrc522.wupa() {
                 defmt::info!("new card detected");
                 match mfrc522.select(&atqa) {
 
@@ -98,6 +104,7 @@ fn main() -> ! {
                         handle_card(&mut mfrc522, &uid, write);
 
                         //locking and unlocking the trolley
+                        red_led.toggle().unwrap();
                         defmt::info!("unlocking and locking!");
                         tim3_ch1.set_duty(tim3_ch1.get_max_duty()/10); // 5% duty cyle 90° 
                         tim3_ch1.enable();
@@ -105,6 +112,7 @@ fn main() -> ! {
                         tim3_ch1.set_duty(tim3_ch1.get_max_duty()/20); // 10% duty cyle 180° 
                         tim3_ch1.enable();
                         cortex_m::asm::delay(5_000_000);
+                        red_led.toggle().unwrap();
                     }
                     Ok(ref uid @ Uid::Double(ref inner)) => {
                         defmt::info!("card double uid {=[?]}", inner.as_bytes());
@@ -120,15 +128,14 @@ fn main() -> ! {
                        
                     }
                 }
-            }
-            //wupa function errors 
-            Err(_) => {
-                defmt::error!("WUPA error");
             
-            }
+            //wupa function errors 
         }
         timer.delay_ms(1000u32);
     }
+
+        
+
 }
 
 
