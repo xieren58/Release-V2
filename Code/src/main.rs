@@ -1,7 +1,7 @@
 #![no_std]
 #![no_main]
 
-use defmt::println;
+//use defmt::println;
 use defmt_rtt as _;
 use panic_probe as _;
 use stm32f3xx_hal as hal;
