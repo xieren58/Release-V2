@@ -20,11 +20,7 @@ use mfrc522::{Mfrc522, Uid};
 fn main() -> ! {
 
     //list of cards with access 
-    let uid_card_pass_1 = ("106, 205, 135,25").as_bytes();
-    let uid_card_pass_2 = ("250, 153, 234, 13").as_bytes();
-    let uid_card_pass_3 = ("250, 153, 234, 13").as_bytes();
-    
-
+    let uid_card_pass_1 = [106, 205, 135,25];
     
     //peripheral stuff
     let dp = pac::Peripherals::take().unwrap();
@@ -126,11 +122,12 @@ fn main() -> ! {
                             green_led.toggle().unwrap();
                         }
                         else{
-                            red_led.toggle().unwrap();
-                            cortex_m::asm::delay(5_000_000);
-                            red_led.toggle().unwrap();
-                        }
-                        
+                            for _ in 0..12 {
+                                cortex_m::asm::delay(5_000_000);
+                                red_led.toggle().unwrap();
+                                cortex_m::asm::delay(5_000_000);
+                                } 
+                            }
 
                     }
                     Ok(ref uid @ Uid::Double(ref inner)) => {
