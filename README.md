@@ -7,9 +7,9 @@
 ## To-Do
 - [X] Join [Servo](https://github.com/tomasApo/stm32f3_pwm_v0) and [RFID](https://github.com/tomasApo/stm32_mfrc522) code together 
 
-- [ ] Incorperate LED's
+- [X] Incorperate LED's
 
-- [ ] Make it so the RFID actually actuates off the servo not just each program runnign idividually 
+- [X] Make it so the RFID actually actuates off the servo not just each program runnign idividually 
 
 - [ ] Buzzer?
 
