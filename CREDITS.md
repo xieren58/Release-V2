@@ -13,5 +13,5 @@
 
 ### Special thanks:
 
-- Jonas Spanoghe 
+- [Jonas Spanoghe]("https://github.com/jspngh") 
 - Tony Sutton 
