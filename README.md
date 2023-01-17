@@ -9,7 +9,7 @@
 
 - [X] Incorperate LED's
 
-- [X] Make it so the RFID actually actuates off the servo not just each program runnign idividually 
+- [X] Make it so the RFID actually actuates off the servo not just each program running individually  
 
 - [ ] Buzzer?
 
