@@ -65,7 +65,7 @@ fn main() -> ! {
 
     let pa0 = gpioa 
         .pa0
-        .into_af_push_pull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl);cd
+        .into_af_push_pull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl);
     
     let mut tim2_ch1 = tim2_channels.0.output_to_pa0(pa0);
         
