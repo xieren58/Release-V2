@@ -27,31 +27,35 @@ fn main() -> ! {
     let cp = cortex_m::Peripherals::take().unwrap();
 
     let mut flash = dp.FLASH.constrain();
-    let mut rcc = dp.RCC.constrain();
-    let mut gpioc = dp.GPIOC.split(&mut rcc.ahb);
+    let mut rcc = dp.RCC.constrain();   
     let mut gpioa = dp.GPIOA.split(&mut rcc.ahb);
-    let mut gpiod = dp.GPIOD.split(&mut rcc.ahb);
-
+    let mut gpiob = dp.GPIOB.split(&mut rcc.ahb);       //  unsure if I need to set this pheriferal to communite through SWD
+    
+    
     // clock configuration
     let clocks = rcc
-        .cfgr
-        .use_hse(8.MHz())
+        .cfgr       // set internal clock by removing .use_hse(8.MHz())
         .sysclk(48.MHz())
         .pclk1(24.MHz())
         .freeze(&mut flash.acr);
 
     //led configuration
-    let mut red_led =gpiod
-        .pd6
-        .into_push_pull_output(&mut gpiod.moder, &mut gpiod.otyper);
+    let mut red_led =gpioa
+        .pa1
+        .into_push_pull_output(&mut gpioa.moder, &mut gpioa.otyper);
     
-    let mut green_led = gpiod 
-        .pd5
-        .into_push_pull_output(&mut gpiod.moder, &mut gpiod.otyper);
+    let mut green_led = gpioa 
+        .pa2
+        .into_push_pull_output(&mut gpioa.moder, &mut gpioa.otyper);
 
-    //tim3 clock
-    let tim3_channels = hal::pwm::tim3(
-        dp.TIM3,
+    let mut on_off_5v_rail = gpioa 
+        .pa3
+        .into_push_pull_output(&mut gpioa.moder, &mut gpioa.otyper);
+
+
+    //tim2 clock
+    let tim2_channels = hal::pwm::tim2(
+        dp.TIM2,
         1280,    // resolution of duty cycle
         50.Hz(), // frequency of period
         &clocks, // To get the timer's clock speed
@@ -59,32 +63,33 @@ fn main() -> ! {
 
     //pwm servo pins and tim3
 
-    let pa6 = gpioa 
-        .pa6
-        .into_af_push_pull::<2>(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl);
+    let pa0 = gpioa 
+        .pa0
+        .into_af_push_pull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl);cd
     
-    let mut tim3_ch1 = tim3_channels.0.output_to_pa6(pa6);
-    
-    
+    let mut tim2_ch1 = tim2_channels.0.output_to_pa0(pa0);
+        
     // Configure pins for SPI
     
-    let nss = gpiod //nss/sda =pd0
-        .pd0
-        .into_push_pull_output(&mut gpiod.moder, &mut gpiod.otyper);
+    let nss = gpioa //nss/sda =pd0
+        .pa4
+        .into_push_pull_output(&mut gpioa.moder, &mut gpioa.otyper);
 
-    let sck = gpioc         //sck = pc10
-        .pc10
-        .into_af_push_pull(&mut gpioc.moder, &mut gpioc.otyper, &mut gpioc.afrh);
+    let sck = gpioa         //sck = pa5
+        .pa5
+        .into_af_push_pull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl); //idk if i need this::<5> check datasheet p48
 
-    let miso = gpioc            //miso = pc11
-        .pc11
-        .into_af_push_pull(&mut gpioc.moder, &mut gpioc.otyper, &mut gpioc.afrh);
-    let mosi = gpioc            //mosi = pc12
-        .pc12
-        .into_af_push_pull(&mut gpioc.moder, &mut gpioc.otyper, &mut gpioc.afrh);
+
+    let miso = gpioa            //miso = pa6
+        .pa6
+        .into_af_push_pull(&mut gpioa.moder,&mut gpioa.otyper,&mut gpioa.afrl);
+        //into_af_push_pull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh);
+    let mosi = gpioa            //mosi = pc12
+        .pa7
+        .into_af_push_pull::<5>(&mut gpioa.moder,&mut gpioa.otyper,&mut gpioa.afrl);
     
     // defaults to using MODE_0
-    let spi = Spi::new(dp.SPI3, (sck, miso, mosi), 1.MHz(), clocks, &mut rcc.apb1);
+    let spi = Spi::new(dp.SPI1, (sck, miso, mosi), 1.MHz(), clocks, &mut rcc.apb2);
 
     let mut timer = Delay::new(cp.SYST, clocks);
 
@@ -95,7 +100,8 @@ fn main() -> ! {
     }
 
     //this Loop needs understanding
-
+    on_off_5v_rail.set_low().unwrap();
+    
     let write = false;
     loop {
         //turning servo left and right 
@@ -111,15 +117,17 @@ fn main() -> ! {
                         handle_card(&mut mfrc522, &uid, write);
                         
                         if inner.as_bytes() == uid_card_pass_1 {
+                            on_off_5v_rail.toggle().unwrap();
                             defmt::info!("unlocking and locking trolley!");
                             green_led.toggle().unwrap();
-                            tim3_ch1.set_duty(tim3_ch1.get_max_duty()/10); // 5% duty cyle 90° 
-                            tim3_ch1.enable();
+                            tim2_ch1.set_duty(tim2_ch1.get_max_duty()/10); // 5% duty cyle 90° 
+                            tim2_ch1.enable();
                             cortex_m::asm::delay(10_000_000);
-                            tim3_ch1.set_duty(tim3_ch1.get_max_duty()/20); // 10% duty cyle 180° 
-                            tim3_ch1.enable();
+                            tim2_ch1.set_duty(tim2_ch1.get_max_duty()/20); // 10% duty cyle 180° 
+                            tim2_ch1.enable();
                             cortex_m::asm::delay(5_000_000);
                             green_led.toggle().unwrap();
+                            on_off_5v_rail.toggle().unwrap();
                         }
                         else{
                             for _ in 0..12 {
