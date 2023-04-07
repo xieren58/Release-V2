@@ -20,7 +20,7 @@ use mfrc522::{Mfrc522, Uid};
 fn main() -> ! {
 
     //list of cards with access 
-    let uid_card_pass_1 = [106, 205, 135,25];
+    let uid_card_pass_1 = [74, 152, 138,25];
     
     //peripheral stuff
     let dp = pac::Peripherals::take().unwrap();
@@ -29,12 +29,13 @@ fn main() -> ! {
     let mut flash = dp.FLASH.constrain();
     let mut rcc = dp.RCC.constrain();   
     let mut gpioa = dp.GPIOA.split(&mut rcc.ahb);
-    let mut gpiob = dp.GPIOB.split(&mut rcc.ahb);       //  unsure if I need to set this pheriferal to communite through SWD
+    //let mut gpiob = dp.GPIOB.split(&mut rcc.ahb);       //  unsure if I need to set this pheriferal to communite through SWD
     
     
     // clock configuration
     let clocks = rcc
-        .cfgr       // set internal clock by removing .use_hse(8.MHz())
+        .cfgr
+        //.use_hse(8.MHz())       // set internal clock by removing .use_hse(8.MHz())
         .sysclk(48.MHz())
         .pclk1(24.MHz())
         .freeze(&mut flash.acr);
@@ -45,7 +46,7 @@ fn main() -> ! {
         .into_push_pull_output(&mut gpioa.moder, &mut gpioa.otyper);
     
     let mut green_led = gpioa 
-        .pa2
+        .pa8
         .into_push_pull_output(&mut gpioa.moder, &mut gpioa.otyper);
 
     let mut on_off_5v_rail = gpioa 
@@ -100,13 +101,14 @@ fn main() -> ! {
     }
 
     //this Loop needs understanding
-    on_off_5v_rail.set_low().unwrap();
+    on_off_5v_rail.set_high().unwrap();
     
     let write = false;
     loop {
         //turning servo left and right 
-        
+        cortex_m::asm::delay(5_000_000);
         //verification for RFID 
+
         if let Ok(atqa) = mfrc522.wupa() {
                 defmt::info!("new card detected");
                 match mfrc522.select(&atqa) {
@@ -117,7 +119,8 @@ fn main() -> ! {
                         handle_card(&mut mfrc522, &uid, write);
                         
                         if inner.as_bytes() == uid_card_pass_1 {
-                            on_off_5v_rail.toggle().unwrap();
+                            //on_off_5v_rail.toggle().unwrap();
+                            cortex_m::asm::delay(15_000_000);
                             defmt::info!("unlocking and locking trolley!");
                             green_led.toggle().unwrap();
                             tim2_ch1.set_duty(tim2_ch1.get_max_duty()/10); // 5% duty cyle 90° 
@@ -127,7 +130,7 @@ fn main() -> ! {
                             tim2_ch1.enable();
                             cortex_m::asm::delay(5_000_000);
                             green_led.toggle().unwrap();
-                            on_off_5v_rail.toggle().unwrap();
+                            //on_off_5v_rail.toggle().unwrap();
                         }
                         else{
                             for _ in 0..12 {
