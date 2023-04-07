@@ -119,18 +119,23 @@ fn main() -> ! {
                         handle_card(&mut mfrc522, &uid, write);
                         
                         if inner.as_bytes() == uid_card_pass_1 {
-                            //on_off_5v_rail.toggle().unwrap();
-                            cortex_m::asm::delay(15_000_000);
                             defmt::info!("unlocking and locking trolley!");
+                            cortex_m::asm::delay(100_000_000);
                             green_led.toggle().unwrap();
+                            defmt::info!("green LED ON");
+                            cortex_m::asm::delay(100_000_000);
+                            defmt::info!("5% dury cycle");
                             tim2_ch1.set_duty(tim2_ch1.get_max_duty()/10); // 5% duty cyle 90° 
                             tim2_ch1.enable();
-                            cortex_m::asm::delay(10_000_000);
+                            cortex_m::asm::delay(100_000_000);
+                            defmt::info!("10% dury cycle");
                             tim2_ch1.set_duty(tim2_ch1.get_max_duty()/20); // 10% duty cyle 180° 
-                            tim2_ch1.enable();
-                            cortex_m::asm::delay(5_000_000);
+                            cortex_m::asm::delay(100_000_000);
+                            tim2_ch1.disable();
+                            cortex_m::asm::delay(50_000_000);
+                            defmt::info!("green LED OFF");
                             green_led.toggle().unwrap();
-                            //on_off_5v_rail.toggle().unwrap();
+                            
                         }
                         else{
                             for _ in 0..12 {
